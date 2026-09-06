@@ -1,0 +1,22 @@
+# Frontend
+SIH Frontend/node_modules/
+SIH Frontend/dist/
+
+# Python
+SIH Backend/__pycache__/
+SIH Backend/.venv/
+SIH Backend/venv/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Generated uploads / outputs
+SIH Backend/uploads/*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store

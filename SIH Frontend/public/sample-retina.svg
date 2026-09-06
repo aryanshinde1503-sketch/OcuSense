@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <radialGradient id="fundusBase" cx="50%" cy="48%" r="60%">
+      <stop offset="0%" stop-color="#e08a4f"/>
+      <stop offset="55%" stop-color="#c96b3a"/>
+      <stop offset="100%" stop-color="#7a3419"/>
+    </radialGradient>
+    <radialGradient id="disc" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f6d9a8"/>
+      <stop offset="100%" stop-color="#e3ac5f"/>
+    </radialGradient>
+    <radialGradient id="macula" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5a1f0e" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#5a1f0e" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="circleClip">
+      <circle cx="200" cy="200" r="196"/>
+    </clipPath>
+  </defs>
+
+  <circle cx="200" cy="200" r="198" fill="#1c1006"/>
+  <g clip-path="url(#circleClip)">
+    <circle cx="200" cy="200" r="196" fill="url(#fundusBase)"/>
+
+    <!-- optic disc -->
+    <ellipse cx="152" cy="196" rx="26" ry="24" fill="url(#disc)"/>
+    <ellipse cx="152" cy="196" rx="26" ry="24" fill="none" stroke="#c98a3c" stroke-width="1.5" opacity="0.6"/>
+
+    <!-- macula shading -->
+    <circle cx="238" cy="206" r="46" fill="url(#macula)"/>
+
+    <!-- vessels -->
+    <g stroke="#7a1f13" fill="none" stroke-linecap="round">
+      <path d="M152 196 C 130 150, 110 110, 96 70" stroke-width="3.4" opacity="0.85"/>
+      <path d="M152 196 C 120 160, 90 140, 60 128" stroke-width="2.6" opacity="0.8"/>
+      <path d="M152 196 C 135 235, 120 270, 108 320" stroke-width="3.2" opacity="0.85"/>
+      <path d="M152 196 C 118 210, 85 220, 50 226" stroke-width="2.4" opacity="0.75"/>
+      <path d="M164 180 C 190 140, 210 100, 218 62" stroke-width="3" opacity="0.8"/>
+      <path d="M170 172 C 210 148, 250 138, 300 130" stroke-width="2.6" opacity="0.75"/>
+      <path d="M168 214 C 200 250, 230 280, 260 330" stroke-width="3" opacity="0.8"/>
+      <path d="M176 206 C 220 220, 260 224, 320 220" stroke-width="2.4" opacity="0.75"/>
+      <path d="M152 196 C 160 150, 175 120, 200 96" stroke-width="1.6" opacity="0.6"/>
+      <path d="M152 196 C 168 240, 190 270, 220 300" stroke-width="1.6" opacity="0.6"/>
+    </g>
+
+    <!-- subtle texture -->
+    <circle cx="120" cy="270" r="3" fill="#8a3a1d" opacity="0.35"/>
+    <circle cx="270" cy="150" r="2.4" fill="#8a3a1d" opacity="0.3"/>
+    <circle cx="300" cy="260" r="2.8" fill="#8a3a1d" opacity="0.3"/>
+    <circle cx="90" cy="150" r="2" fill="#8a3a1d" opacity="0.3"/>
+
+    <!-- vignette -->
+    <circle cx="200" cy="200" r="196" fill="none" stroke="#170b03" stroke-width="30" opacity="0.35"/>
+  </g>
+  <circle cx="200" cy="200" r="196" fill="none" stroke="#0c0602" stroke-width="4"/>
+</svg>
