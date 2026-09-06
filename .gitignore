@@ -1,11 +1,11 @@
 # Frontend
-SIH Frontend/node_modules/
-SIH Frontend/dist/
+frontend/node_modules/
+frontend/dist/
 
 # Python
-SIH Backend/__pycache__/
-SIH Backend/.venv/
-SIH Backend/venv/
+backend/__pycache__/
+backend/.venv/
+backend/venv/
 
 # Environment files
 .env
@@ -13,7 +13,7 @@ SIH Backend/venv/
 !.env.example
 
 # Generated uploads / outputs
-SIH Backend/uploads/*
+backend/uploads/*
 
 # Jupyter
 .ipynb_checkpoints/

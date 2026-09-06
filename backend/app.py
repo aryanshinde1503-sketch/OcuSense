@@ -52,7 +52,9 @@ print("✅ ResNet50 model loaded")
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# @app.route("/uploads/<path:filename>")
 @app.route("/uploads/<path:filename>")
+@app.route("/api/uploads/<path:filename>")
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
@@ -101,6 +103,7 @@ def upload():
 #         "heatmap_url": "pending"
 #     })
 @app.route("/predict", methods=["POST"])
+@app.route("/api/predict", methods=["POST"])
 def predict():
     if "image" not in request.files:
         return jsonify({"error": "No image file provided"}), 400
@@ -150,8 +153,10 @@ def predict():
     return jsonify({
         "severity": predicted_class,
         "confidence": confidence * 100,
-        "heatmap_url": f"http://127.0.0.1:5000/uploads/{heatmap_filename}",
-        "overlay_url": f"http://127.0.0.1:5000/uploads/{overlay_filename}"
+        # "heatmap_url": f"http://127.0.0.1:5000/uploads/{heatmap_filename}",
+        # "overlay_url": f"http://127.0.0.1:5000/uploads/{overlay_filename}"
+        "heatmap_url": f"/api/uploads/{heatmap_filename}",
+        "overlay_url": f"/api/uploads/{overlay_filename}",
     })
 
 if __name__ == "__main__":
