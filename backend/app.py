@@ -28,7 +28,11 @@ model = resnet50(weights=None)
 model.fc = nn.Linear(model.fc.in_features, 5)
 
 model.load_state_dict(
-    torch.load("resnet50_best.pth", map_location=device)
+    torch.load(
+    "resnet50_best.pth",
+    map_location=device,
+    weights_only=False
+)
 )
 
 model = model.to(device)
