@@ -12,6 +12,8 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import torch
+torch.set_num_threads(1)
+torch.set_num_interop_threads(1)
 import torch.nn as nn
 from torchvision.models import resnet50, ResNet50_Weights
 from torchvision import transforms
