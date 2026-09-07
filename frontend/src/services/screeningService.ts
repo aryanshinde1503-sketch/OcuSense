@@ -67,18 +67,23 @@ export async function createScreening(patient: Patient): Promise<Screening> {
 //   }
 //   return image;
 // }
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:5000';
+
 export async function uploadRetinalImage(
   screeningId: string,
   file: File,
   previewUrl?: string
 ): Promise<RetinalImage> {
   const formData = new FormData();
-  formData.append('image', file);
+formData.append('image', file);
 
-  const response = await fetch('/api/predict', {
-    method: 'POST',
-    body: formData,
-  });
+// const response = await fetch('https://striking-tranquility-production-5e49.up.railway.app/predict', {
+const response = await fetch(`${API_BASE_URL}/predict`, {
+// const response = await fetch('http://127.0.0.1:5000/predict', {
+  method: 'POST',
+  body: formData,
+});
 
   if (!response.ok) {
     throw new Error('Failed to upload image');
