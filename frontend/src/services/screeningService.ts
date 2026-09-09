@@ -86,8 +86,17 @@ const response = await fetch(`${API_BASE_URL}/predict`, {
 });
 
   if (!response.ok) {
-    throw new Error('Failed to upload image');
+  let message = 'Failed to upload image';
+
+  try {
+    const errorData = await response.json();
+    message = errorData.message || message;
+  } catch {
+    // Keep default message if response is not JSON
   }
+
+  throw new Error(message);
+}
 
   const data = await response.json();
 

@@ -21,6 +21,7 @@ export default function ImageUpload() {
   const [fileName, setFileName] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!flow.screeningId) navigate('/screening/patient');
@@ -50,16 +51,27 @@ export default function ImageUpload() {
   if (!flow.screeningId || !selectedFile) return;
 
   setUploading(true);
+  setError(null);
 
-  const image = await uploadRetinalImage(
-    flow.screeningId,
-    selectedFile,
-    preview || SAMPLE_RETINA_IMG
-  );
+  try {
+    const image = await uploadRetinalImage(
+      flow.screeningId,
+      selectedFile,
+      preview || SAMPLE_RETINA_IMG
+    );
 
-  setFlow((f) => ({ ...f, retinalImage: image }));
-  setUploading(false);
-  navigate('/screening/analyzing');
+    setFlow((f) => ({ ...f, retinalImage: image }));
+    navigate('/screening/analyzing');
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : 'Unable to analyze this image. Please try again.';
+
+    setError(message);
+  } finally {
+    setUploading(false);
+  }
 };
 
   const useSample = () => {
@@ -123,6 +135,13 @@ export default function ImageUpload() {
             </div>
           )}
         </Card>
+
+                {error && (
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <p className="font-semibold">Invalid image</p>
+            <p className="mt-1">{error}</p>
+          </div>
+        )}
 
         <Button
           className="mt-6 w-full"
