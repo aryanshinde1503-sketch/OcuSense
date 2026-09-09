@@ -15,7 +15,12 @@ import torch
 torch.set_num_threads(1)
 torch.set_num_interop_threads(1)
 import torch.nn as nn
-from torchvision.models import resnet50, ResNet50_Weights
+# from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import (
+    resnet50,
+    ResNet50_Weights,
+    mobilenet_v3_small,
+)
 from torchvision import transforms
 from PIL import Image
 from explain import grad_cam
@@ -39,6 +44,24 @@ model.load_state_dict(
 
 model = model.to(device)
 model.eval()
+# Load Fundus / Non-Fundus gate
+gate_model = mobilenet_v3_small(weights=None)
+gate_model.classifier[3] = nn.Linear(
+    gate_model.classifier[3].in_features,
+    2
+)
+
+gate_model.load_state_dict(
+    torch.load(
+        "fundus_gate_mobilenetv3.pth",
+        map_location=device
+    )
+)
+
+gate_model = gate_model.to(device)
+gate_model.eval()
+
+print("✅ Fundus gate model loaded")
 
 val_transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -48,6 +71,41 @@ val_transform = transforms.Compose([
         std=[0.229, 0.224, 0.225]
     )
 ])
+# Transform for Fundus / Non-Fundus gate
+gate_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )
+])
+
+
+def check_fundus_image(image):
+    """
+    Returns:
+        result: 'FUNDUS' or 'NON-FUNDUS'
+        confidence: confidence of the predicted class
+    """
+
+    image_tensor = gate_transform(image).unsqueeze(0).to(device)
+
+    gate_model.eval()
+
+    with torch.no_grad():
+        output = gate_model(image_tensor)
+        probabilities = torch.softmax(output, dim=1)
+
+    predicted_class = probabilities.argmax(dim=1).item()
+    confidence = probabilities[0, predicted_class].item()
+
+    if predicted_class == 0:
+        result = "FUNDUS"
+    else:
+        result = "NON-FUNDUS"
+
+    return result, confidence
 
 print("✅ ResNet50 model loaded")
 # import tensorflow as tf
@@ -119,7 +177,28 @@ def predict():
     filepath = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(filepath)
 
+
     image = Image.open(filepath).convert("RGB")
+
+    # -------------------------------------------------
+    # Step 1: Fundus / Non-Fundus validation
+    # -------------------------------------------------
+    gate_result, gate_confidence = check_fundus_image(image)
+
+    print("Fundus Gate:", gate_result)
+    print("Gate Confidence:", f"{gate_confidence * 100:.2f}%")
+
+    if gate_result == "NON-FUNDUS":
+        return jsonify({
+            "error": "Invalid image",
+            "message": "The uploaded image is not a retinal fundus image. Please upload a fundus image.",
+            "gate_result": gate_result,
+            "gate_confidence": gate_confidence * 100
+        }), 400
+
+    # -------------------------------------------------
+    # Step 2: Continue with existing DR model
+    # -------------------------------------------------
     image_tensor = val_transform(image).unsqueeze(0).to(device)
 
     # Prediction
