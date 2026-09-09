@@ -107,6 +107,41 @@ def check_fundus_image(image):
 
     return result, confidence
 
+def calculate_fundus_blur_score(image):
+    """
+    Calculate sharpness of the retinal region.
+    Higher score = sharper image.
+    """
+
+    image_np = np.array(image)
+    image_bgr = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
+
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+
+    # Ignore mostly-black background
+    mask = gray > 10
+
+    if not np.any(mask):
+        return 0.0
+
+    ys, xs = np.where(mask)
+
+    x1, x2 = xs.min(), xs.max()
+    y1, y2 = ys.min(), ys.max()
+
+    retinal = gray[y1:y2 + 1, x1:x2 + 1]
+
+    retinal = cv2.resize(retinal, (512, 512))
+
+    score = cv2.Laplacian(
+        retinal,
+        cv2.CV_64F
+    ).var()
+
+    return float(score)
+
+BLUR_THRESHOLD = 60.0
+
 print("✅ ResNet50 model loaded")
 # import tensorflow as tf
 # from explain import grad_cam   # import your Grad-CAM function
@@ -197,7 +232,25 @@ def predict():
         }), 400
 
     # -------------------------------------------------
-    # Step 2: Continue with existing DR model
+    # Step 2: Fundus image quality / blur check
+    # -------------------------------------------------
+    blur_score = calculate_fundus_blur_score(image)
+
+    print("Blur Score:", f"{blur_score:.2f}")
+
+    if blur_score < BLUR_THRESHOLD:
+        return jsonify({
+            "error": "Poor image quality",
+            "message": (
+                "A retinal fundus image was detected, but it appears "
+                "too blurry. Please recapture the image with better "
+                "focus and lighting."
+            ),
+            "gate_result": gate_result,
+            "blur_score": blur_score
+        }), 400
+    # -------------------------------------------------
+    # Step 3: Continue with existing DR model
     # -------------------------------------------------
     image_tensor = val_transform(image).unsqueeze(0).to(device)
 
