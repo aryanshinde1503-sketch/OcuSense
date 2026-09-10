@@ -27,20 +27,9 @@ import cv2
 
 
 def grad_cam(model, image_tensor):
-    """
-    Generate a Grad-CAM heatmap for a PyTorch ResNet50 model.
-
-    image_tensor:
-        Preprocessed image tensor of shape [1, 3, 224, 224]
-
-    Returns:
-        heatmap as a NumPy array with values from 0 to 1
-    """
-
     activations = []
     gradients = []
 
-    # Last convolutional block of ResNet50
     target_layer = model.layer4[-1]
 
     def forward_hook(module, input, output):
@@ -53,38 +42,35 @@ def grad_cam(model, image_tensor):
     backward_handle = target_layer.register_full_backward_hook(backward_hook)
 
     try:
-        model.zero_grad()
+        model.zero_grad(set_to_none=True)
 
-        # Forward pass
+        # Do not calculate gradients for model parameters.
+        for param in model.parameters():
+            param.requires_grad_(False)
+
+        # We only need gradient information flowing through the image.
+        image_tensor = image_tensor.clone().detach().requires_grad_(True)
+
         output = model(image_tensor)
 
-        # Select predicted class
         predicted_class = output.argmax(dim=1).item()
-
-        # Backward pass for predicted class
         score = output[0, predicted_class]
+
         score.backward()
 
-        # Get saved activations and gradients
         activation = activations[0]
         gradient = gradients[0]
 
-        # Average gradients over spatial dimensions
         weights = gradient.mean(dim=(2, 3), keepdim=True)
 
-        # Weighted combination of feature maps
         cam = (weights * activation).sum(dim=1, keepdim=True)
-
-        # ReLU
         cam = torch.relu(cam)
 
-        # Remove batch/channel dimensions
-        cam = cam.squeeze().detach().cpu().numpy()
-
-        # Resize to 224x224
+        # cam = cam.squeeze().detach().cpu().numpy()
+        # cam = cv2.resize(cam, (224, 224))
+        cam = cam.squeeze().detach().cpu().numpy().astype(np.float32)
         cam = cv2.resize(cam, (224, 224))
 
-        # Normalize to 0-1
         cam -= cam.min()
 
         if cam.max() > 0:

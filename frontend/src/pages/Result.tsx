@@ -1,4 +1,6 @@
-import { useEffect } from 'react';
+import { createReferral } from '../services/referralService';
+// import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import ScreeningSteps from '../components/ScreeningSteps';
@@ -14,12 +16,50 @@ export default function Result() {
   const navigate = useNavigate();
   const { flow } = useScreeningFlow();
 
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [referral, setReferral] = useState<{
+    referral_id: number;
+    patient_id: string;
+    status: string;
+  } | null>(null);
+  const [referralError, setReferralError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!flow.result || !flow.retinalImage) navigate('/screening/patient');
   }, [flow.result, flow.retinalImage, navigate]);
 
   if (!flow.result || !flow.retinalImage) return null;
   const { result, retinalImage } = flow;
+
+    const handleCreateReferral = async () => {
+    if (!flow.screeningId) {
+      setReferralError('Screening ID is missing.');
+      return;
+    }
+
+    setReferralLoading(true);
+    setReferralError(null);
+
+    try {
+      const data = await createReferral({
+        screening_id: flow.screeningId,
+        dr_grade: Number(result.severity.match(/\d+/)?.[0] ?? 0),
+        risk_level: result.riskLevel,
+        referral_center: 'District Eye Care Center',
+        referral_date: new Date().toISOString().split('T')[0],
+      });
+
+      setReferral(data);
+    } catch (error) {
+      setReferralError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to create referral.'
+      );
+    } finally {
+      setReferralLoading(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -52,6 +92,41 @@ export default function Result() {
               <p className="mt-0.5 text-sm text-teal-700">{result.recommendedNextStep}</p>
             </div>
           </div>
+          
+          {result.riskLevel !== 'Low' && (
+          <div className="mt-4">
+            {!referral ? (
+              <Button
+                className="w-full"
+                onClick={handleCreateReferral}
+                disabled={referralLoading}
+              >
+                {referralLoading ? 'Creating Referral…' : 'Create Referral'}
+              </Button>
+            ) : (
+              <div className="rounded-xl bg-teal-50 p-4">
+                <p className="font-medium text-teal-800">
+                  Referral created successfully
+                </p>
+                <p className="mt-1 text-sm text-teal-700">
+                  Patient ID: {referral.patient_id}
+                </p>
+                <p className="text-sm text-teal-700">
+                  Referral ID: {referral.referral_id}
+                </p>
+                <p className="text-sm text-teal-700">
+                  Status: {referral.status}
+                </p>
+              </div>
+            )}
+
+            {referralError && (
+              <p className="mt-2 text-sm text-red-600">
+                {referralError}
+              </p>
+            )}
+          </div>
+        )}
 
           <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />

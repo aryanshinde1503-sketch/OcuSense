@@ -7,7 +7,11 @@ import Button from '../components/Button';
 import UploadArea from '../components/UploadArea';
 import Badge from '../components/Badge';
 import { useScreeningFlow } from '../hooks/useScreeningFlow';
-import { uploadRetinalImage } from '../services/screeningService';
+// import { uploadRetinalImage } from '../services/screeningService';
+import {
+  uploadRetinalImage,
+  validateRetinalImage,
+} from '../services/screeningService';
 import { SAMPLE_RETINA_IMG } from '../data/mockData';
 import { ArrowRight, RefreshCcw, Trash2, ImageIcon } from 'lucide-react';
 
@@ -21,6 +25,10 @@ export default function ImageUpload() {
   const [fileName, setFileName] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [imageQuality, setImageQuality] = useState<string | null>(null);
+  const [blurScore, setBlurScore] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,12 +40,37 @@ export default function ImageUpload() {
   //   const url = URL.createObjectURL(file);
   //   setPreview(url);
   // };
-  const handleFile = (file: File) => {
-    setSelectedFile(file);
-    setFileName(file.name);
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-  };
+  const handleFile = async (file: File) => {
+  setSelectedFile(file);
+  setFileName(file.name);
+
+  const url = URL.createObjectURL(file);
+  setPreview(url);
+
+  setValidating(true);
+  setValidationError(null);
+  setImageQuality(null);
+  setBlurScore(null);
+
+  try {
+    const result = await validateRetinalImage(file);
+
+    setImageQuality(result.imageQuality);
+    setBlurScore(result.blurScore ?? null);
+
+    if (!result.valid) {
+      setValidationError(result.message);
+    }
+  } catch (error) {
+    setValidationError(
+      error instanceof Error
+        ? error.message
+        : 'Unable to validate the image.'
+    );
+  } finally {
+    setValidating(false);
+  }
+};
 
   // const handleContinue = async () => {
   //   if (!flow.screeningId) return;
@@ -74,10 +107,10 @@ export default function ImageUpload() {
   }
 };
 
-  const useSample = () => {
-    setFileName('sample_retina.svg');
-    setPreview(SAMPLE_RETINA_IMG);
-  };
+  // const useSample = () => {
+  //   setFileName('sample_retina.svg');
+  //   setPreview(SAMPLE_RETINA_IMG);
+  // };
 
   return (
     <DashboardLayout>
@@ -92,12 +125,12 @@ export default function ImageUpload() {
           {!preview ? (
             <>
               <UploadArea onFileSelected={handleFile} />
-              <button
+              {/* <button
                 onClick={useSample}
                 className="mt-4 flex w-full items-center justify-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-700"
               >
                 <ImageIcon className="h-4 w-4" /> Use a sample image instead
-              </button>
+              </button> */}
             </>
           ) : (
             <div className="flex flex-col items-center gap-4">
@@ -105,7 +138,15 @@ export default function ImageUpload() {
                 <img src={preview} alt="Uploaded retinal preview" className="h-full w-full object-cover" />
               </div>
               <p className="text-sm text-navy-500">{fileName}</p>
-              <Badge tone="teal">Image quality: Good</Badge>
+              <Badge tone="teal">
+                {validating
+                ? 'Checking image…'
+                : validationError
+                  ? imageQuality === 'Poor'
+                    ? 'Image quality: Poor'
+                    : 'Invalid image'
+                  : `Image quality: ${imageQuality ?? 'Checking…'}`}
+            </Badge>
               <div className="flex gap-3">
                 <Button
                   size="sm"
@@ -136,16 +177,25 @@ export default function ImageUpload() {
           )}
         </Card>
 
-                {error && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            <p className="font-semibold">Invalid image</p>
-            <p className="mt-1">{error}</p>
-          </div>
-        )}
-
+                {validationError && (
+  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+    <p className="font-medium text-red-700">
+      Invalid image
+    </p>
+    <p className="mt-1 text-sm text-red-600">
+      {validationError}
+    </p>
+  </div>
+)}
         <Button
-          className="mt-6 w-full"
-          disabled={!preview || uploading}
+  className="mt-6 w-full"
+  disabled={
+    !preview ||
+    uploading ||
+    validating ||
+    !!validationError ||
+    imageQuality !== 'Good'
+  }
           onClick={handleContinue}
           icon={<ArrowRight className="h-4 w-4" />}
         >
