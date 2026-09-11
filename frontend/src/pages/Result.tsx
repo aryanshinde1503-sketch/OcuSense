@@ -42,6 +42,7 @@ export default function Result() {
 
     try {
       const data = await createReferral({
+        patient_id: flow.patient?.id ?? '',
         screening_id: flow.screeningId,
         dr_grade: Number(result.severity.match(/\d+/)?.[0] ?? 0),
         risk_level: result.riskLevel,

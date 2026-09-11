@@ -13,7 +13,7 @@ import {
   validateRetinalImage,
 } from '../services/screeningService';
 import { SAMPLE_RETINA_IMG } from '../data/mockData';
-import { ArrowRight, RefreshCcw, Trash2, ImageIcon } from 'lucide-react';
+import { ArrowRight, RefreshCcw, Trash2 } from 'lucide-react';
 
 export default function ImageUpload() {
   const navigate = useNavigate();
@@ -28,8 +28,6 @@ export default function ImageUpload() {
   const [validating, setValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [imageQuality, setImageQuality] = useState<string | null>(null);
-  const [blurScore, setBlurScore] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!flow.screeningId) navigate('/screening/patient');
@@ -50,13 +48,11 @@ export default function ImageUpload() {
   setValidating(true);
   setValidationError(null);
   setImageQuality(null);
-  setBlurScore(null);
 
   try {
     const result = await validateRetinalImage(file);
 
     setImageQuality(result.imageQuality);
-    setBlurScore(result.blurScore ?? null);
 
     if (!result.valid) {
       setValidationError(result.message);
@@ -84,7 +80,6 @@ export default function ImageUpload() {
   if (!flow.screeningId || !selectedFile) return;
 
   setUploading(true);
-  setError(null);
 
   try {
     const image = await uploadRetinalImage(
@@ -96,12 +91,6 @@ export default function ImageUpload() {
     setFlow((f) => ({ ...f, retinalImage: image }));
     navigate('/screening/analyzing');
   } catch (err) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : 'Unable to analyze this image. Please try again.';
-
-    setError(message);
   } finally {
     setUploading(false);
   }

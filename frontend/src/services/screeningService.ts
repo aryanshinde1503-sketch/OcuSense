@@ -5,7 +5,7 @@ import type {
   RetinalImage,
   AIExplanation,
 } from '../types';
-import { mockFeatures, mockHistory, currentPatient, SAMPLE_RETINA_IMG } from '../data/mockData';
+import { mockHistory, currentPatient, SAMPLE_RETINA_IMG } from '../data/mockData';
 
 // ---------------------------------------------------------------------------
 // Mock service layer.
